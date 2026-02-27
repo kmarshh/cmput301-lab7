@@ -20,6 +20,12 @@ import androidx.test.filters.LargeTest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import static androidx.test.espresso.intent.Intents.init;
+import static androidx.test.espresso.intent.Intents.release;
+import static androidx.test.espresso.intent.Intents.intended;
+import static androidx.test.espresso.intent.matcher.IntentMatchers.hasComponent;
+
+import androidx.test.espresso.intent.Intents;
 
 @RunWith(AndroidJUnit4.class)
 @LargeTest
@@ -64,5 +70,65 @@ public class MainActivityTest {
     // If this data matches the text we provided then Voila! Our test should pass
     // You can also use anything() in place of is(instanceOf(String.class))
         onData(is(instanceOf(String.class))).inAdapterView(withId(R.id.city_list)).atPosition(0).check(matches((withText("Edmonton"))));
+    }
+    @Test
+    public void testActivitySwitch() {
+
+        Intents.init();
+
+        // Add a city first
+        onView(withId(R.id.button_add)).perform(click());
+        onView(withId(R.id.editText_name)).perform(ViewActions.typeText("Berlin"));
+        onView(withId(R.id.button_confirm)).perform(click());
+
+        // Click first item in list
+        onData(anything())
+                .inAdapterView(withId(R.id.city_list))
+                .atPosition(0)
+                .perform(click());
+
+        // Check ShowActivity started
+        intended(hasComponent(ShowActivity.class.getName()));
+
+        Intents.release();
+    }
+    @Test
+    public void testCityNameConsistency() {
+
+        // Add city
+        onView(withId(R.id.button_add)).perform(click());
+        onView(withId(R.id.editText_name)).perform(ViewActions.typeText("Tokyo"));
+        onView(withId(R.id.button_confirm)).perform(click());
+
+        // Click it
+        onData(anything())
+                .inAdapterView(withId(R.id.city_list))
+                .atPosition(0)
+                .perform(click());
+
+        // Verify correct text in ShowActivity
+        onView(withId(R.id.text_cityName))
+                .check(matches(withText("Tokyo")));
+    }
+    @Test
+    public void testBackButton() {
+
+        // Add city
+        onView(withId(R.id.button_add)).perform(click());
+        onView(withId(R.id.editText_name)).perform(ViewActions.typeText("Paris"));
+        onView(withId(R.id.button_confirm)).perform(click());
+
+        // Open ShowActivity
+        onData(anything())
+                .inAdapterView(withId(R.id.city_list))
+                .atPosition(0)
+                .perform(click());
+
+        // Click back button
+        onView(withId(R.id.button_back)).perform(click());
+
+        // Check we returned to MainActivity
+        onView(withId(R.id.city_list))
+                .check(matches(isDisplayed()));
     }
 }
